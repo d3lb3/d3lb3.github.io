@@ -26,7 +26,7 @@
           {%- endcapture -%}
 
           {{ site.data.locales[site.lang].meta
-            | default: 'Using the :PLATFORM theme :THEME.'
+            | default: 'Using a customized version of :THEME for :PLATFORM.'
             | replace: ':PLATFORM', _platform | replace: ':THEME', _theme
           }}
         </p>
