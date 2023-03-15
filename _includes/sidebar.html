@@ -48,13 +48,14 @@
     {% endunless %}
 
     {% for entry in site.data.contact %}
-      {% capture url %}
-        {%- if entry.type == 'github' -%}
-          https://github.com/{{ site.github.username }}
-        {%- elsif entry.type == 'twitter' -%}
-          https://twitter.com/{{ site.twitter.username }}
-        {%- endif -%}
-      {% endcapture %}
+      {% case entry.type %}
+        {% when 'github', 'twitter' %}
+          {%- capture url -%}
+            https://{{ entry.type }}.com/{{ site[entry.type].username }}
+          {%- endcapture -%}
+        {% else %}
+          {% assign url = entry.url %}
+      {% endcase %}
 
       {% if url %}
       <a href="{{ url }}" aria-label="{{ entry.type }}"
