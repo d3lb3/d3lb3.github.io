@@ -47,6 +47,11 @@ html {
   color: var(--highlighter-rouge-color);
   margin-top: 0.5rem;
   margin-bottom: 1.2em; /* Override BS Inline-code style */
+
+  pre {
+    tab-size: 2;
+  }
+
 }
 
 .highlight {
@@ -142,6 +147,10 @@ td.rouge-code {
     color: inherit !important;
     border-bottom: none !important;
     pointer-events: none;
+  }
+
+  pre {
+    tab-size: 2;
   }
 }
 
