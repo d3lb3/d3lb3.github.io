@@ -6,6 +6,14 @@
 -
   type: twitter
   icon: 'fab fa-twitter'
+-
+  type: discord
+  icon: 'fab fa-discord'
+  url: 'https://discordapp.com/users/302911486760845322'
+-
+  type: linkedin
+  icon: 'fab fa-linkedin'
+  url:  'https://fr.linkedin.com/in/julien-bedel'
 
 # Uncomment and complete the url below to enable more contact options
 # -
