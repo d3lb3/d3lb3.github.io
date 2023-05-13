@@ -4,8 +4,10 @@ icon: fas fa-info-circle
 order: 4
 ---
 
-I am a 25 years old penetration tester, open source advocate and Python lover, currently working at Orange Cyberdefense.
+Since I was very young, I have always been deeply passionate about computers. After studying at INSA Lyon (France) and Budapest University of  Technology and Economics (Hungary), I graduated in 2021 with a degree in computer engineering. Throughout my master's degree, I was also the chairman of *InSecurity*, my university's computer club, giving courses and participating in various "Capture the Flag" events.
 
-During my computer science studies at INSA Lyon (France), I have been an active member of the computer club *Insecurity*, giving courses and participating in various Capture The Flag events. I also had the opportunity to study abroad at the Budapest University of Technology and Economics (Hungary) for a semester, where I attended CrySyS Lab courses, which were extremely valuable in my learning process.
+I then worked as a penetration tester for various  organizations such as Greater Lyon territorial collectivity, and now  Orange Cyberdefense.
 
-I then worked as a penetration tester for various organizations such as Greater Lyon territorial collectivity, and now Orange Cyberdefense. After dozens of penetration testing assessments, I am spending more and more time in research & development. I took part of BOF project, featured at DEFCON 25, and am now focusing on password managers security. I also contributed to various open source projects including Scapy, Metasploit, CrackMapExec and Impacket.
+In addition to security audits, I now spend more and more time in research and development. I have participated in studies on BMS/CTM protocols (featured at DEFCON 25 and Pass The Salt conferences) as well as studies on password managers (presented at leHACK 2023 conference and MISC magazine).
+
+I am also involved in open-source development, contributing to BOF, Metasploit, Scapy, Impacket, CrackMapExec and Exegol projects.
