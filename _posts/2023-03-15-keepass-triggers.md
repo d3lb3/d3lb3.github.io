@@ -623,14 +623,14 @@ Our final payload will be:
 
 ### PoC time!
 
-Running it against our sample database, we can observe that entries' UUIDS are populated in `%appdata%\extract.txt`{: .filepath} 🥳
+Running it against our sample database, we observe that entries' UUIDS are successfuly populated in `%appdata%\extract.txt`{: .filepath} 🥳
 
 ![extracted_entries](/assets/img/blog/keepass_triggers/extracted_entries.png){: .shadow}
 
 ## Afterwords
 
-Following the discovery, I contacted KeePass developers, which where already working on a fix. As a result, a patch was introduced in [version 2.54](https://keepass.info/news/n230603_2.54.html), released in June 2023. It includes a new way to manage triggers, forcing them in the [enforced configuration file](https://keepass.info/help/kb/config_enf.html) (only accessible to privileged users). 
+I contacted KeePass developers, which where already working on a fix. As a result, a patch was introduced in [version 2.54](https://keepass.info/news/n230603_2.54.html), released in June 2023. It includes a new way to manage triggers that forces them in the [enforced configuration file](https://keepass.info/help/kb/config_enf.html) (only accessible to privileged users). 
 
 The extraction technique still works, but now requires administrator privileges. As an attacker with such privileges could perform virtually any other extraction technique (e.g. malicious plugin, DLL injections..), I believe that this scenario should not be considered in KeePass threat model. In my opinion, monitoring the application directory for malicious uses seems more relevant.
 
-Final note: I may not have discovered the most efficient way to combine KeePass features in order to extract passwords, and would really appreciate to discuss if this post gave you ideas. I am easily reachable on Twitter and Discord, both shown on the left panel off the blog.
+PS: I may not have discovered the most efficient way to combine these KeePass features to extract passwords. If this post gave you ideas, feel free to reach me and improve the payloads together! I am easily reachable on Twitter and Discord, both shown on the left panel off the blog.
