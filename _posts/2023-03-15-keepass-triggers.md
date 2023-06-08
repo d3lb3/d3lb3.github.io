@@ -1,7 +1,7 @@
 ---
 layout: post
 title: KeePass Triggers Are Dead, Long Live KeePass Triggers!
-permalink: /keepass_triggers_arent_dead
+permalink: /keepass_triggers_arent_dead/
 author: d3lb3_
 date: 2023-06-08
 math: true
@@ -16,15 +16,15 @@ math: true
 
 7 years ago, Will Schroeder (a.k.a @harmj0y) showed how attackers could abuse KeePass trigger system in order to extract cleartext passwords. As it only required the addition of some parameters in a configuration file, this technique was at the same time straightforward and quiet. I ended up abusing triggers whenever I encountered KeePass in penetration testing engagements, gathering every secret of the IT staff almost every time.
 
-Because write access to such file file typically requires administrator rights on the target machine, the technique was considered by KeePass developers (and probably the vast majority of the infosec community too) outside of the software threat model. However, a thread released on KeePass forum in early 2023 pointed at the issue and started to make big noise. CVE-2023-24055 was eventually filled at the same time, quickly drawing the public's attention with numerous voices claiming that the password manager was not safe.
+Because write access to such file typically requires administrator rights on the target machine, the technique was considered by KeePass developers (and probably the vast majority of the infosec community too) outside of the software threat model. However, a thread released on KeePass forum in early 2023 pointed at the issue and started to make big noise. CVE-2023-24055 was eventually filled at the same time, quickly drawing the public's attention with numerous voices claiming that the password manager was not safe.
 
-Following this controversy, KeePass developers eventually decided to introduce an additional check in version 2.53.1, which now systematically asks for the masterkey before exporting databases. While other post-exploitation techniques such as DLL injection still (and will always, as no patch is possible neither for KeePass nor any other password manager) allow attackers to extract KeePass secrets, I wanted to have a deeper look into KeePass trigger system, see if I could find another way to get passwords from there.
+Following this controversy, KeePass developers eventually decided to introduce an additional check in version 2.53.1, which now systematically asks for the masterkey before exporting databases. While other post-exploitation techniques such as DLL injection still (and will always, as no patch is possible neither for KeePass nor any other password manager) allow attackers to extract secrets, I wanted to have a deeper look into the trigger system, see if I could find another way to get passwords from there.
 
 This article demonstrates how a combination of KeePass triggers, placeholders and field references can be used to export databases by simply editing the configuration file.
 
 ## Reminders on the "old" trigger abuse
 
-Will Schroeder's [article](https://blog.harmj0y.net/redteaming/keethief-a-case-study-in-attacking-keepass-part-2/) already explains very well how KeePass triggers could be abused priori to version 2.53.1. Because his technique introduces various features that we are going to abuse later in this article, we will briefly explain it here.
+Will Schroeder's [article](https://blog.harmj0y.net/redteaming/keethief-a-case-study-in-attacking-keepass-part-2/) already explains very well how KeePass triggers could be abused prior to version 2.53.1. Because his technique introduces various features that we are going to abuse later in this article, we will briefly explain it here.
 
 As described in the documentation: *"KeePass features a powerful event-condition-action trigger system. With this system, workflows can be automated. For example, you could define a trigger that automatically uploads your database to a backup server after saving the file locally"*.
 
@@ -83,27 +83,27 @@ This whole process was done silently in the background, until patch 2.53.1 intro
 While the *"Export"* indication is not *that* obvious, asking a user for its masterkey twice in a row (one time to unlock the database + one time for the export) will probably raise suspicions.
 
 > The corresponding CVE-2023-24055 is still marked as *DISPUTED* by NIST. While it is not the subject of this article to determine whether trigger system abuse is a vulnerability or not, I highly recommend you to read the whole [forum thread](https://sourceforge.net/p/keepass/discussion/329220/thread/a146e5cf6b). It sums up pretty well each point of view, and even includes extra salt from the participants! In my opinion, the decision to add a patch is understandable, but also creates a risk for users to reconsider the initial threat model, stating that every action taken as administrator (injecting DLL, abusing the plugin system, replacing KeePass binary) would also need its own fix: it's basically endless.
-{: .prompt-info }
+> {: .prompt-info }
 
 ## Leaking passwords through the placeholder system
 
 ### KeePass placeholders
 
-When reading through KeePass trigger documentation, I came across a sentence that caught my attention : *"Most strings in the trigger system are Spr-compiled, i.e. placeholders (except state-changing ones), environment variables, etc. can be used"*.
+When reading through KeePass trigger documentation, I came across a sentence that caught my attention : *"Most strings in the trigger system are Spr-compiled, i.e. placeholders, environment variables, etc. can be used"*.
 
-Lots of word that we don't know here, so let's visit KeePass [Placeholders](https://keepass.info/help/base/placeholders.html) documentation page and try to find out more : *"KeePass uses the abbreviation 'Spr' for 'String placeholder replacement'. An Spr-compiled field is a field where placeholders are replaced when performing an action with this field (like copying it to the clipboard, sending it using auto-type, etc.)."*
+Lots of word that we don't know here, so let's visit KeePass [Placeholders](https://keepass.info/help/base/placeholders.html) documentation page and try to find out more : *"KeePass uses the abbreviation 'Spr' for 'String placeholder replacement'. An Spr-compiled field is a field where placeholders are replaced when performing an action with this field."*
 
-In other words, placeholders are special string enclosed with braces, that are compiled on-the-fly by KeePass. For example, if you want to dynamically use the current entry's username, you can evaluate it with the `{USERNAME}` placeholder.
+In other words, placeholders are special strings enclosed with braces, that are compiled on-the-fly by KeePass. For example, if you want to dynamically use the current entry's username, you can evaluate it with the `{USERNAME}` placeholder.
 
 ![placeholder_example](/assets/img/blog/keepass_triggers/placeholder_example.png){: .shadow}
-_The username's and title parts of the URL are dynamically replaced using a placeholder._
+_The username and title parts of the URL are dynamically replaced using a placeholder._
 
 
 The example above would obviously not be of much use in a real-life scenario, but you get the idea of this whole compilation behavior. From what I read online, placeholders are mostly used to perform entry auto-typing on browsers. They offer large scripting possibilities, as they support basically every field of an entry:
 
 ![placeholder_list](/assets/img/blog/keepass_triggers/placeholders_list.png){: .shadow}
 
-I bet you saw that too, you can export the password field from a placeholder! Many other things are possible, including direct interaction with the operating system like reading environment variables, getting and setting the clipboard or even execute command lines.
+I bet you saw that too, you can export the password field from a placeholder! Note that many other things are possible, including direct interaction with the operating system like reading environment variables, getting and setting the clipboard, or even execute command lines.
 
 We can already build a basic trigger that makes use of placeholders to export database secrets. It could for example use the *Copied entry data to clipboard* event, and trigger an *Execute command line / URL* action that would write `{TITLE}:{USERNAME}:{PASSWORD}:{URL}` to a text file, successfully extracting every entry that the user copies to its clipboard.
 
@@ -117,7 +117,7 @@ if (!(Test-Path $env:APPDATA'\clipboard_export.txt'))
 Add-Content $env:APPDATA'\clipboard_export.txt' '{TITLE}:{USERNAME}:{PASSWORD}:{URL}'
 ```
 
-The resulting trigger can be foWe insert this code inside a trigger, And the resulting trigger would look like this:
+We insert this code inside a trigger, And the resulting trigger would look like this:
 
 ```xml
 <Trigger>
@@ -162,7 +162,7 @@ We are able to leak some passwords, this is cool but still very limited because:
 2. It is not exhaustive, and would be much nicer if we could get every database entry.
 
 > Understanding how simple triggers works is a good checkpoint before heading to more ~~brainfucking~~ complex ones. As you progress through the blog post, feel free to try each of them in your KeePass!!
-{: .prompt-tip }
+> {: .prompt-tip }
 
 ### KeePass field references
 
@@ -236,7 +236,7 @@ _Targeted entry leaked through the placeholder reference system._
 > As demonstrated in the last screenshot, when the *\<Searchin>* string does not match any entry, the placeholder is not replaced (but no error is raised).
 >
 > When multiple entries are matched, the placeholder is only replaced by the first match. As a result, potentially interesting entries may be "hidden" by this behavior.
-{: .prompt-info }
+> {: .prompt-info }
 
 This technique can already leak parts of the database from the configuration file, but is a bit hazardous: we overcome the need for user interaction, but still lack the exaustivity. Let's get back to the documentation, see if we could find a way to uniquely predict every entry of the database.
 
@@ -257,7 +257,7 @@ The minimum requirement for a *\<Searchin>* string to get a match is a single ch
 > As a result, the probability of finding a specific character at least once in any of the 32 positions is:
 >
 > $$ 1-({15 \over 16})^{32} ≈ 87\% $$
-{: .prompt-info }
+> {: .prompt-info }
 
 If we successively match "0", "1" and "2", the probability increases to 99.89%. It means that a combination of `{REF:I@I:0} {REF:I@I:1} {REF:I@I:2}` will typically match the whole database. However, as explained in the last part, only the first matching entry is kept and replaced in the placeholder.
 
@@ -389,7 +389,7 @@ To execute a command in a hidden window, `CMD` uses the following syntax:
 ```
 
 > While understanding  {CMD} placeholder in details is not essential for the rest of the blog post, I highly recomand you to read the related [documentation page](https://keepass.info/help/base/placeholders.html) (at the very bottom) if you don't want to blindly copy-paste payloads from this article and/or create your own.
-{: .prompt-tip }
+> {: .prompt-tip }
 
 Instead of storing UUIDs in a variables, we can them in a text file (or virtually any place reachable from the command  such as environment variables or the clipboard) that will be written and read before the compilation of placeholders. The `{CMD ...}` part of the placeholder would then:
 
@@ -502,7 +502,7 @@ Because this code will be executed inside a trigger condition, it needs to be in
 ```
 
 > Because we insert a {CMD} placeholder inside another one, a custom separator (here '&') must be defined.
-{: .prompt-tip }
+> {: .prompt-tip }
 
 ### Resolving every entry
 
