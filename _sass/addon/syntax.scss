@@ -45,7 +45,7 @@ html {
   @extend %rounded;
 
   color: var(--highlighter-rouge-color);
-  margin-top: 0.5rem;
+  margin-top: 1.2rem;
   margin-bottom: 1.2em; /* Override BS Inline-code style */
 
   pre {
@@ -63,7 +63,7 @@ html {
   }
 
   overflow: auto;
-  padding-top: 0.5rem;
+  padding-top: 1rem;
   padding-bottom: 1rem;
 
   pre {
