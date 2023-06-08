@@ -74,22 +74,22 @@ As an attacker, we can easily create a malicious trigger from the graphical inte
 </Trigger>
 ```
 
-This XML is ready to be inserted in a target's *KeePass.config.xml* (`<Configuration><Application><TriggerSystem><Triggers>`{: .filepath}), and the trigger will then be loaded on the upcoming KeePass startup. Next time a database is unlocked, it will be exported to `%appdata%\export.csv`{: .filepath}.
+This XML is ready to be inserted in a target's *KeePass.config.xml* (`<Configuration><Application><TriggerSystem><Triggers>`{: .filepath}). The trigger will then be loaded on the upcoming KeePass startup. Next time a database is unlocked, it will be exported to `%appdata%\export.csv`{: .filepath}.
 
-This whole process was done silently in the background, until patch 2.53.1 introduced a mandatory masterkey prompt to export databases. Here is what it looks like:
+This whole process was done silently in the background, until patch 2.53.1 introduced a mandatory masterkey prompt to export databases. Here is what the new prompt looks like:
 
 ![export_prompt](/assets/img/blog/keepass_triggers/export_prompt.png)
 
 While the *"Export"* indication is not *that* obvious, asking a user for its masterkey twice in a row (one time to unlock the database + one time for the export) will probably raise suspicions.
 
 > The corresponding CVE-2023-24055 is still marked as *DISPUTED* by NIST. While it is not the subject of this article to determine whether trigger system abuse is a vulnerability or not, I highly recommend you to read the whole [forum thread](https://sourceforge.net/p/keepass/discussion/329220/thread/a146e5cf6b). It sums up pretty well each point of view, and even includes extra salt from the participants! In my opinion, the decision to add a patch is understandable, but also creates a risk for users to reconsider the initial threat model, stating that every action taken as administrator (injecting DLL, abusing the plugin system, replacing KeePass binary) would also need its own fix: it's basically endless.
-> {: .prompt-info }
+{: .prompt-info }
 
 ## Leaking passwords through the placeholder system
 
 ### KeePass placeholders
 
-Reading through KeePass trigger documentation, I came across a sentence that caught my attention : *"Most strings in the trigger system are Spr-compiled, i.e. placeholders, environment variables, etc. can be used"*.
+When reading through KeePass trigger documentation, I came across a sentence that caught my attention : *"Most strings in the trigger system are Spr-compiled, i.e. placeholders, environment variables, etc. can be used"*.
 
 Lots of word that we don't know here, so let's visit KeePass [Placeholders](https://keepass.info/help/base/placeholders.html) documentation page and try to find out more : *"KeePass uses the abbreviation 'Spr' for 'String placeholder replacement'. An Spr-compiled field is a field where placeholders are replaced when performing an action with this field."*
 
@@ -99,13 +99,15 @@ In other words, placeholders are special strings enclosed with braces, that are 
 _The username and title parts of the URL are dynamically replaced using a placeholder._
 
 
-The example above would obviously not be of much use in a real-life scenario, but you get the idea of this whole Spr-compilation behavior. From what I read online, placeholders are mostly used to perform entry auto-typing in browsers. They offer large scripting possibilities, as they support basically every field of an entry:
+The example above would obviously not be of much use in a real-life scenario, but you get the idea of this whole compilation behavior. From what I read online, placeholders are mostly used to perform entry auto-typing on browsers. They offer large scripting possibilities, as they support basically every field of an entry:
 
 ![placeholder_list](/assets/img/blog/keepass_triggers/placeholders_list.png){: .shadow}
 
-I bet you saw that too, you can export the password field from a placeholder! We can already build a very basic trigger that makes use of placeholders to export database secrets. It could for example use the *Copied entry data to clipboard* event, and trigger an *Execute command line / URL* action that would write `{TITLE}:{USERNAME}:{PASSWORD}:{URL}` to a text file. In the end,  every entry that the user copies to its clipboard would be extracted.
+I bet you saw that too, you can export the password field from a placeholder! Note that many other things are possible, including direct interaction with the operating system like reading environment variables, getting and setting the clipboard, or even execute command lines.
 
-The command line execution would be as simple as the following PowerShell code:
+We can already build a basic trigger that makes use of placeholders to export database secrets. It could for example use the *Copied entry data to clipboard* event, and trigger an *Execute command line / URL* action that would write `{TITLE}:{USERNAME}:{PASSWORD}:{URL}` to a text file, successfully extracting every entry that the user copies to its clipboard.
+
+The PowerShell would be as simple as simple as:
 
 ```powershell
 if (!(Test-Path $env:APPDATA'\clipboard_export.txt'))
@@ -115,7 +117,7 @@ if (!(Test-Path $env:APPDATA'\clipboard_export.txt'))
 Add-Content $env:APPDATA'\clipboard_export.txt' '{TITLE}:{USERNAME}:{PASSWORD}:{URL}'
 ```
 
-The ready-to-use trigger would look like this:
+We insert this code inside a trigger, And the resulting trigger would look like this:
 
 ```xml
 <Trigger>
@@ -164,9 +166,9 @@ We are able to leak some passwords, this is cool but still very limited because:
 
 ### KeePass field references
 
-From an attacker perspective, the main issue with placeholders is that they are linked to the currently selected entry, limiting exploitations to where the user points its mouse on the graphical interface. Let's read more, see if we could find another way to leverage placeholders.
+From an attacker perspective, the main issue with placeholders is that they are linked to the currently selected entry, limiting exploitations to where the user points its mouse on the graphical interface. Let's RTFM more, see if we could find another way to leverage placeholders.
 
-After a bunch of RTFM, I found exactly what was needed: _"Fields of other entries can be inserted using Field References"_. This feature is meant for cases when "*multiple entries can share a common field, and by changing the actual data entry all other entries will also use the new value"*.
+After a bunch of reading, I found exactly what was needed: _"Fields of other entries can be inserted using Field References"_. This feature is meant for cases when "*multiple entries can share a common field, and by changing the actual data entry all other entries will also use the new value"*.
 
 As KeePass developpers did a really nice work with their [documentation page](https://keepass.info/help/base/fieldrefs.html), I will just show it as it is:
 
@@ -180,9 +182,9 @@ By specifying "U" as *\<WantedField\>*, "T" as *\<Searchin>* and "SRV01" as *\<T
 
 If we are able to infer or guess the value of an entry's title, we can export each of its fields. Let's say that we target the virtualization environment of a company, it is actually quite possible that the IT staff's database has entries whose title contains keywords like *vmware*, *vsphere*, *vcenter*, *esx*, etc. 
 
-Because field references KeePass [simple search mode](https://keepass.info/help/base/search.html#mode_se) to resolve fields, there is no need for our keywords to perfectly match the entries' title. If it is *vSphere Administrator Access*, then `{REF:<WantedField>@T:vsphere}` is enough to get a match.
+It is important to keep in mind that there is no need for our keywords to perfectly match the entries' title, as KeePass [simple search mode](https://keepass.info/help/base/search.html#mode_se) is used to resolve them. If the title is *vSphere Administrator Access*, then `{REF:<WantedField>@T:vsphere}` is enough to get a match.
 
-Following this principle, we can once again create a PowerShell-executing trigger that tries to resolve the following references and write them in a file, hopefully gathering passwords on the way:
+Following this principle, we can create a similar PowerShell-executing trigger that tries to resolve the following references and write them in a file, hopefully gathering passwords on the way:
 
 ```
 {REF:U@T:vmware}:{REF:P@T:vmware}:{REF:A@T:vmware}
@@ -191,7 +193,7 @@ Following this principle, we can once again create a PowerShell-executing trigge
 {REF:U@T:esxi}:{REF:P@T:esx}:{REF:A@T:esxi}
 ```
 
-The resulting XML trigger would be:
+The resulting trigger would be:
 
 ```xml
 <Trigger>
@@ -223,7 +225,7 @@ The resulting XML trigger would be:
 </Trigger>
 ```
 
-Because our sample database has an entry's title matching "vcenter", the third line of our export file will successfully include its fields. 
+Because our sample database had an entry's title matching "vcenter", the third line of our export file will successfully includes the entry and its password. 
 
 ![sample_database](/assets/img/blog/keepass_triggers/sample_database.png){: .shadow}
 _The targeted sample database._
@@ -231,11 +233,12 @@ _The targeted sample database._
 ![reference_export](/assets/img/blog/keepass_triggers/reference_export.png){: .shadow}
 _Targeted entry leaked through the placeholder reference system._
 
-> As demonstrated in the last screenshot, when the *\<Searchin>* string does not match any entry, the placeholder is not replaced (but no error/exception is raised).
-> When multiple entries are matched, the placeholder is only replaced by the first one. As a result, potentially interesting entries may be "hidden" by this behavior.
+> As demonstrated in the last screenshot, when the *\<Searchin>* string does not match any entry, the placeholder is not replaced (but no error is raised).
+>
+> When multiple entries are matched, the placeholder is only replaced by the first match. As a result, potentially interesting entries may be "hidden" by this behavior.
 {: .prompt-info }
 
-This technique can already leak parts of the database from the configuration file, but is a bit hazardous: we overcome the need for user interaction, but still lack the exaustivity. Let's see if we could find a way to uniquely predict every entry of the database.
+This technique can already leak parts of the database from the configuration file, but is a bit hazardous: we overcome the need for user interaction, but still lack the exaustivity. Let's get back to the documentation, see if we could find a way to uniquely predict every entry of the database.
 
 ## UUID recursion time!
 
@@ -247,7 +250,9 @@ The minimum requirement for a *\<Searchin>* string to get a match is a single ch
 
 > Computing the actual probability is fairly easy using the complementary. To get its value, we first compute the probability of **not finding** the character "0" (or any other character, as the result is them same) in any of the 32 positions, then subtract it from 1.
 >
-> Since there are 15 other hexadecimal characters (1-9, A-F) besides "0"  in the set of possibilities, the probability of not finding "0" in a single position is ${15 \over 16}$. Applied to the 32 characters, not finding "0" in the whole UUID is therefore equivalent to $({15 \over 16})^{32}$.
+> Since there are 15 other hexadecimal characters (1-9, A-F) besides "0"  in the set of possibilities, the probability of not finding "0" in a single position is ${15 \over 16}$.
+> 
+> Applied to the 32 characters, not finding "0" in the whole UUID is therefore equivalent to $({15 \over 16})^{32}$.
 >
 > As a result, the probability of finding a specific character at least once in any of the 32 positions is:
 >
@@ -301,7 +306,7 @@ To increase the probability of matching the whole database, we can add a second 
 ...                         ...                             ...
 ```
 
-Let's test the resulting trtigger against our sample database:
+Let's test the resulting trigger against our sample database:
 
 ```xml
 <Trigger>
@@ -341,17 +346,17 @@ Great! We are now able to recursively extract every entry of a database, unless.
 ![recursion_limit](/assets/img/blog/keepass_triggers/recursion_limit.png){: .shadow}
 _`KeePass/Util/Spr/SprEngine`{: .filepath} source code includes a maximum depth of recursion._
 
-As a result, we cannot go further than 12 levels of recursions, meaning that we cannot extract more than 12 entries.
+As a result, we cannot go further than 12 levels of recursion, meaning that we cannot extract more than 12 entries.
 
 ## Using KeePass as a programming language?
 
-We cannot use nested field references, but can imagine a command-executing trigger that would successively resolve UUIDs using only one placeholder: 
+We cannot use nested field references, but can imagine a command-executing trigger that would successively resolve UUIDs using only one placeholder like: 
 
 ```powershell
 $excluded_uuids = ''
 while(...) {
 	$new_uid = '{REF:I@I:0 $excluded_uuids}'
-	$excluded_uuids += '-'$new_uid
+	$excluded_uuids += ' -'$new_uid
 }
 ```
 
@@ -369,7 +374,7 @@ $new_uid == {REF:I@I:0 -46C9B1FF..} == DCC8CF1F1..
 # Third loop..
 ```
 
-There is however a massive concern about this solution: *"The file/URL and arguments are parsed by the Spr engine **before** they are sent to the shell, i.e. generic and database-dependent placeholders can be used"*. Because placeholders are always resolved first in the process, we cannot include PowerShell variables inside with `{REF:I@I:0 $exluded_uids}`. In fact, placeholders can be considered as constant values when used in command line arguments. This behavior also prevents the use of loops or conditional flows.
+There is however a massive concern about this solution. As explained in the documentation: *"The file/URL and arguments are parsed by the Spr engine **before** they are sent to the shell"*. Because placeholders are always resolved first in the process, we cannot include PowerShell variables inside `{REF:I@I:0 $exluded_uids}`. In fact, placeholders can be considered as constant values when used in command line arguments, preventing their use in loops or conditional flows.
 
 ### "Variables"
 
