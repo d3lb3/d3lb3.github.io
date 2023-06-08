@@ -182,7 +182,7 @@ If we are able to infer or guess the value of an entry's title, we can export ea
 
 Because field references KeePass [simple search mode](https://keepass.info/help/base/search.html#mode_se) to resolve fields, there is no need for our keywords to perfectly match the entries' title. If it is *vSphere Administrator Access*, then `{REF:<WantedField>@T:vsphere}` is enough to get a match.
 
-Following this principle, we can create a similar PowerShell-executing trigger that tries to resolve the following references and write them in a file, hopefully gathering passwords on the way:
+Following this principle, we can once again create a PowerShell-executing trigger that tries to resolve the following references and write them in a file, hopefully gathering passwords on the way:
 
 ```
 {REF:U@T:vmware}:{REF:P@T:vmware}:{REF:A@T:vmware}
@@ -191,7 +191,7 @@ Following this principle, we can create a similar PowerShell-executing trigger t
 {REF:U@T:esxi}:{REF:P@T:esx}:{REF:A@T:esxi}
 ```
 
-The resulting trigger would be:
+The resulting XML trigger would be:
 
 ```xml
 <Trigger>
@@ -223,7 +223,7 @@ The resulting trigger would be:
 </Trigger>
 ```
 
-Because our sample database had an entry's title matching "vcenter", the third line of our export file will successfully includes the entry and its password. 
+Because our sample database has an entry's title matching "vcenter", the third line of our export file will successfully include its fields. 
 
 ![sample_database](/assets/img/blog/keepass_triggers/sample_database.png){: .shadow}
 _The targeted sample database._
@@ -231,10 +231,9 @@ _The targeted sample database._
 ![reference_export](/assets/img/blog/keepass_triggers/reference_export.png){: .shadow}
 _Targeted entry leaked through the placeholder reference system._
 
-> As demonstrated in the last screenshot, when the *\<Searchin>* string does not match any entry, the placeholder is not replaced (but no error is raised).
->
-> When multiple entries are matched, the placeholder is only replaced by the first match. As a result, potentially interesting entries may be "hidden" by this behavior.
-> {: .prompt-info }
+> As demonstrated in the last screenshot, when the *\<Searchin>* string does not match any entry, the placeholder is not replaced (but no error/exception is raised).
+> When multiple entries are matched, the placeholder is only replaced by the first one. As a result, potentially interesting entries may be "hidden" by this behavior.
+{: .prompt-info }
 
 This technique can already leak parts of the database from the configuration file, but is a bit hazardous: we overcome the need for user interaction, but still lack the exaustivity. Let's get back to the documentation, see if we could find a way to uniquely predict every entry of the database.
 
