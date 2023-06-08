@@ -420,7 +420,7 @@ To stop the loop, we can simply make a `{CMD}` placeholder return a string like 
 ![end_loop_example](/assets/img/blog/keepass_triggers/end_loop_example.png){: .shadow}
 _The trigger will be executed when the command return false_
 
-Once the stop condition is valid, the trigger is executed. Because actions where already performed in the condition, we no longer need one and can immediately stop the trigger. For a trigger to be deleted right after it is executed, we can simply check *"Turn off after executing actions (run once)"* box in the trigger properties, or use the *"Change trigger on/off state"* action.
+Once the stop condition is valid, the trigger is executed. Because actions where already performed in the condition through `{CMD}`, we no longer need any, and can immediately stop the trigger. For a trigger to be deleted right after it is executed, we can simply check *"Turn off after executing actions (run once)"* box in the trigger properties, or use the *"Change trigger on/off state"* action.
 
 ## Putting it all together
 
