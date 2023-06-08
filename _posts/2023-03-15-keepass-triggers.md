@@ -245,30 +245,26 @@ Apart from obvious fields like title, username, password and URL, there is a "hi
 
 The minimum requirement for a *\<Searchin>* string to get a match is a single character correlation. While a UUID is by design impossible to predict, guessing one of its characters is not so hard. Let's take the character "0" as an example. Among every entry of the database, there is a high chance that we find one UUID containing the character. In other words, `{REF:I@I:0}` will *probably* resolve a field.
 
-> Computing the actual probability is fairly easy using the complementary. To get its value, we first compute the probability of **not finding** the character "0" (or any other character, as the result is equal) in any of the 32 positions, then subtract it from 1.
+> Computing the actual probability is fairly easy using the complementary. To get its value, we first compute the probability of **not finding** the character "0" (or any other character, as the result is them same) in any of the 32 positions, then subtract it from 1.
 >
-> Since there are 15 other hexadecimal characters (1-9, A-F) besides "0"  in the set of possibilities, the probability of not finding "0" in a single position is ${15 \over 16}$.
->
-> Not finding "0" in the whole UUID is therefore equivalent to $({15 \over 16})^{32}$.
+> Since there are 15 other hexadecimal characters (1-9, A-F) besides "0"  in the set of possibilities, the probability of not finding "0" in a single position is ${15 \over 16}$. Applied to the 32 characters, not finding "0" in the whole UUID is therefore equivalent to $({15 \over 16})^{32}$.
 >
 > As a result, the probability of finding a specific character at least once in any of the 32 positions is:
 >
 > $$ 1-({15 \over 16})^{32} ≈ 87\% $$
 {: .prompt-info }
 
-If we successively match "0", "1" and "2", the probability increases to 99.89%. It means that a combination of `{REF:I@I:0} {REF:I@I:1} {REF:I@I:2}` will typically match the whole database. However, as explained in the last part, only the first matching entry is kept and replaced in the placeholder.
-
-Note that everything described here would virtually be possible using titles search, but the broader format and character set compared to UUIDs makes the probabilities way worse.
+If we successively match "0" or "1" or "2", the probability increases to 99.89%. It means that a combination of `{REF:I@I:0} {REF:I@I:1} {REF:I@I:2}` will _almost always_ match the whole database. However, as explained in the last part, only the first matching entry is kept and replaced in the placeholder.
 
 ### Recursive field references
 
 Let's try to get around the "first matching entry only" issue. 
 
-According to KeePass documentation, we can use the minus sign to exclude results from the list:
+According to KeePass documentation, we can use the minus sign to exclude results from a search result:
 
 ![simple_search_doc](/assets/img/blog/keepass_triggers/simple_search_doc.png){: .shadow}
 
-By using the minus sign to build a recursive placeholder `{REF:I@I:0 -{REF:I@I:0}}`, we are able to exclude the first match and successfully access the second matching entry . 
+By using the minus sign to build a recursive placeholder `{REF:I@I:0 -{REF:I@I:0}}`, we are able to exclude the first match and successfully access the second matching entry. 
 
 Let's take a second to understand this, and assume that matching entry #1 has UUID *46C9B1FF..* and matching entry #2 has UUID *DCC8CF1F..* :
 
@@ -283,9 +279,9 @@ Let's take a second to understand this, and assume that matching entry #1 has UU
 This works only because :
 
 1. The resolution order is consistent between searches (`{REF:I@I:0}` will always match the same entry).
-2. A recursive placeholder always compiles deeper elements first.
+2. A recursive placeholder always compiles "deeper" elements first.
 
-The resulting trigger would write something like that in a file:
+We can build a trigger that would Spr-compile and write the following placeholders in a file:
 
 ```
 {REF:U@I:0}                 {REF:P@I:0}                 {REF:A@I:0}
@@ -293,9 +289,9 @@ The resulting trigger would write something like that in a file:
 ...                         ...                         ...
 ```
 
-The next step would be to add another level of recursion with `{REF:U@I:0 -{REF:U@I:0 -{REF:I@I:0}}}`, etc. I created a dirty Python script [TODO] to generate recursive payloads, available as a gist.
+The next step would be to add another level of recursion with `{REF:U@I:0 -{REF:U@I:0 -{REF:I@I:0}}}`, etc. I created a [dirty Python script](https://gist.github.com/d3lb3/fb6f5d82e47744f56117b350d94a6029) to generate recursive payloads.
 
-To increase the probability of matching the whole database, we can add another character match like so:
+To increase the probability of matching the whole database, we can add a second character match like so:
 
 ```
 {REF:U@I:0}                 {REF:P@I:0}                     {REF:A@I:0}
@@ -386,7 +382,7 @@ To execute a command in a hidden window, `CMD` uses the following syntax:
 ```
 
 > While understanding  {CMD} placeholder in details is not essential for the rest of the blog post, I highly recomand you to read the related [documentation page](https://keepass.info/help/base/placeholders.html) (at the very bottom) if you don't want to blindly copy-paste payloads from this article and/or create your own.
-> {: .prompt-tip }
+{: .prompt-tip }
 
 Instead of storing UUIDs in a variables, we can them in a text file (or virtually any place reachable from the command  such as environment variables or the clipboard) that will be written and read before the compilation of placeholders. The `{CMD ...}` part of the placeholder would then:
 
@@ -499,7 +495,7 @@ Because this code will be executed inside a trigger condition, it needs to be in
 ```
 
 > Because we insert a {CMD} placeholder inside another one, a custom separator (here '&') must be defined.
-> {: .prompt-tip }
+{: .prompt-tip }
 
 ### Resolving every entry
 
