@@ -415,7 +415,7 @@ Since our placeholder is part of a trigger, we can however use it inside KeePass
 ![event_every_second](/assets/img/blog/keepass_triggers/event_every_second.png)
 _"Time - Period" trigger event can be used to resolve the same placeholder multiple times_
 
-To stop the loop, we can simply make a `{CMD}` placeholder return a string like *"true"* or *"false"* depending if we want to continue or not.
+To stop the loop, we can simply make a `{CMD}` placeholder return a string like *"stop"* to tell KeePass we are done.
 
 ![end_loop_example](/assets/img/blog/keepass_triggers/end_loop_example.png){: .shadow}
 _The trigger will be executed when the command return false_
