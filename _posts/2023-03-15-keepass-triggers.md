@@ -74,9 +74,9 @@ As an attacker, we can easily create a malicious trigger from the graphical inte
 </Trigger>
 ```
 
-This XML is ready to be inserted in a target's *KeePass.config.xml* (`<Configuration><Application><TriggerSystem><Triggers>`{: .filepath}). The trigger will then be loaded on the upcoming KeePass startup. Next time a database is unlocked, it will be exported to `%appdata%\export.csv`{: .filepath}.
+This XML is ready to be inserted in a target's *KeePass.config.xml* (`<Configuration><Application><TriggerSystem><Triggers>`{: .filepath}), and the trigger will then be loaded on the upcoming KeePass startup. Next time a database is unlocked, it will be exported to `%appdata%\export.csv`{: .filepath}.
 
-This whole process was done silently in the background, until patch 2.53.1 introduced a mandatory masterkey prompt to export databases. Here is what the new prompt looks like:
+This whole process was done silently in the background, until patch 2.53.1 introduced a mandatory masterkey prompt to export databases. Here is what it looks like:
 
 ![export_prompt](/assets/img/blog/keepass_triggers/export_prompt.png)
 
@@ -89,7 +89,7 @@ While the *"Export"* indication is not *that* obvious, asking a user for its mas
 
 ### KeePass placeholders
 
-When reading through KeePass trigger documentation, I came across a sentence that caught my attention : *"Most strings in the trigger system are Spr-compiled, i.e. placeholders, environment variables, etc. can be used"*.
+Reading through KeePass trigger documentation, I came across a sentence that caught my attention : *"Most strings in the trigger system are Spr-compiled, i.e. placeholders, environment variables, etc. can be used"*.
 
 Lots of word that we don't know here, so let's visit KeePass [Placeholders](https://keepass.info/help/base/placeholders.html) documentation page and try to find out more : *"KeePass uses the abbreviation 'Spr' for 'String placeholder replacement'. An Spr-compiled field is a field where placeholders are replaced when performing an action with this field."*
 
@@ -99,15 +99,13 @@ In other words, placeholders are special strings enclosed with braces, that are 
 _The username and title parts of the URL are dynamically replaced using a placeholder._
 
 
-The example above would obviously not be of much use in a real-life scenario, but you get the idea of this whole compilation behavior. From what I read online, placeholders are mostly used to perform entry auto-typing on browsers. They offer large scripting possibilities, as they support basically every field of an entry:
+The example above would obviously not be of much use in a real-life scenario, but you get the idea of this whole Spr-compilation behavior. From what I read online, placeholders are mostly used to perform entry auto-typing in browsers. They offer large scripting possibilities, as they support basically every field of an entry:
 
 ![placeholder_list](/assets/img/blog/keepass_triggers/placeholders_list.png){: .shadow}
 
-I bet you saw that too, you can export the password field from a placeholder! Note that many other things are possible, including direct interaction with the operating system like reading environment variables, getting and setting the clipboard, or even execute command lines.
+I bet you saw that too, you can export the password field from a placeholder! We can already build a very basic trigger that makes use of placeholders to export database secrets. It could for example use the *Copied entry data to clipboard* event, and trigger an *Execute command line / URL* action that would write `{TITLE}:{USERNAME}:{PASSWORD}:{URL}` to a text file. In the end,  every entry that the user copies to its clipboard would be extracted.
 
-We can already build a basic trigger that makes use of placeholders to export database secrets. It could for example use the *Copied entry data to clipboard* event, and trigger an *Execute command line / URL* action that would write `{TITLE}:{USERNAME}:{PASSWORD}:{URL}` to a text file, successfully extracting every entry that the user copies to its clipboard.
-
-The PowerShell would be as simple as simple as:
+The command line execution would be as simple as the following PowerShell code:
 
 ```powershell
 if (!(Test-Path $env:APPDATA'\clipboard_export.txt'))
@@ -117,7 +115,7 @@ if (!(Test-Path $env:APPDATA'\clipboard_export.txt'))
 Add-Content $env:APPDATA'\clipboard_export.txt' '{TITLE}:{USERNAME}:{PASSWORD}:{URL}'
 ```
 
-We insert this code inside a trigger, And the resulting trigger would look like this:
+The ready-to-be-copied trigger would look like this:
 
 ```xml
 <Trigger>
