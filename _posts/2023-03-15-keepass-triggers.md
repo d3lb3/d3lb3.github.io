@@ -386,16 +386,16 @@ To execute a command in a hidden window, `CMD` uses the following syntax:
 {CMD:/PowerShell.exe -C "\<commands\>"/M=C,W:0,O:1,WS=H/}
 ```
 
-> While understanding  {CMD} placeholder in details is not essential for the rest of the blog post, I highly recomand you to read the related [documentation page](https://keepass.info/help/base/placeholders.html) (at the very bottom) if you don't want to blindly copy-paste payloads from this article and/or create your own.
+> While understanding  {CMD} placeholder in details is not essential for the rest of the blog post, I highly recommend you to read the related [documentation page](https://keepass.info/help/base/placeholders.html) (at the very bottom) if you don't want to blindly copy-paste payloads from this article and/or create your own.
 {: .prompt-tip }
 
-Instead of storing UUIDs in a variables, we can them in a text file (or virtually any place reachable from the command  such as environment variables or the clipboard) that will be written and read before the compilation of placeholders. The `{CMD ...}` part of the placeholder would then:
+Instead of storing UUIDs in variables, we can put them in a text file (or virtually any place reachable from the command such as environment variables or the clipboard) that will be written and read before the compilation of placeholders. The `{CMD ...}` part of the placeholder would then:
 
 1. Retrieve the previously found UUIDs from the text file
 2. Build the UUIDs exclusion string
-3. Insert the string in a field reference placeholder `{REF:I@I:0 <list of UUIDS to exclude>}`
+3. Insert the string in a field reference placeholder `{REF:I@I:0 <list of UUIDsto exclude>}`
 4. Append the newly-discovered UUID to the text file
-5. Repeat to step 1 until there are no more UUID left to discover
+5. Repeat from step 1 until there are no more UUID left to discover
 
 ### "Loops"
 
@@ -406,11 +406,11 @@ loop like this and expect the placeholder value to be different each iteration:
 $excluded_uuids = ''
 while(...) {
 	$new_uid = '{REF:I@I:0 {CMD ...}}'
-	$excluded_uuids += '-'$new_uid
+	$excluded_uuids += ' -'$new_uid
 }
 ```
 
-Because our placeholder is part of a trigger, we can however use it inside KeePass's *"every X second"* event and successively resolve the placeholder's value on each loop.
+Since our placeholder is part of a trigger, we can however use it inside KeePass's *"every X second"* event and successively resolve the placeholder's value on each loop.
 
 ![event_every_second](/assets/img/blog/keepass_triggers/event_every_second.png)
 _"Time - Period" trigger event can be used to resolve the same placeholder multiple times_
