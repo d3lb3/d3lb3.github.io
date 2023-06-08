@@ -235,7 +235,7 @@ _Targeted entry leaked through the placeholder reference system._
 > When multiple entries are matched, the placeholder is only replaced by the first one. As a result, potentially interesting entries may be "hidden" by this behavior.
 {: .prompt-info }
 
-This technique can already leak parts of the database from the configuration file, but is a bit hazardous: we overcome the need for user interaction, but still lack the exaustivity. Let's get back to the documentation, see if we could find a way to uniquely predict every entry of the database.
+This technique can already leak parts of the database from the configuration file, but is a bit hazardous: we overcome the need for user interaction, but still lack the exaustivity. Let's see if we could find a way to uniquely predict every entry of the database.
 
 ## UUID recursion time!
 
@@ -254,7 +254,7 @@ The minimum requirement for a *\<Searchin>* string to get a match is a single ch
 > As a result, the probability of finding a specific character at least once in any of the 32 positions is:
 >
 > $$ 1-({15 \over 16})^{32} ≈ 87\% $$
-> {: .prompt-info }
+{: .prompt-info }
 
 If we successively match "0", "1" and "2", the probability increases to 99.89%. It means that a combination of `{REF:I@I:0} {REF:I@I:1} {REF:I@I:2}` will typically match the whole database. However, as explained in the last part, only the first matching entry is kept and replaced in the placeholder.
 
