@@ -115,7 +115,7 @@ if (!(Test-Path $env:APPDATA'\clipboard_export.txt'))
 Add-Content $env:APPDATA'\clipboard_export.txt' '{TITLE}:{USERNAME}:{PASSWORD}:{URL}'
 ```
 
-The ready-to-be-copied trigger would look like this:
+The ready-to-use trigger would look like this:
 
 ```xml
 <Trigger>
@@ -160,13 +160,13 @@ We are able to leak some passwords, this is cool but still very limited because:
 2. It is not exhaustive, and would be much nicer if we could get every database entry.
 
 > Understanding how simple triggers works is a good checkpoint before heading to more ~~brainfucking~~ complex ones. As you progress through the blog post, feel free to try each of them in your KeePass!!
-> {: .prompt-tip }
+{: .prompt-tip }
 
 ### KeePass field references
 
-From an attacker perspective, the main issue with placeholders is that they are linked to the currently selected entry, limiting exploitations to where the user points its mouse on the graphical interface. Let's RTFM more, see if we could find another way to leverage placeholders.
+From an attacker perspective, the main issue with placeholders is that they are linked to the currently selected entry, limiting exploitations to where the user points its mouse on the graphical interface. Let's read more, see if we could find another way to leverage placeholders.
 
-After a bunch of reading, I found exactly what was needed: _"Fields of other entries can be inserted using Field References"_. This feature is meant for cases when "*multiple entries can share a common field, and by changing the actual data entry all other entries will also use the new value"*.
+After a bunch of RTFM, I found exactly what was needed: _"Fields of other entries can be inserted using Field References"_. This feature is meant for cases when "*multiple entries can share a common field, and by changing the actual data entry all other entries will also use the new value"*.
 
 As KeePass developpers did a really nice work with their [documentation page](https://keepass.info/help/base/fieldrefs.html), I will just show it as it is:
 
@@ -180,7 +180,7 @@ By specifying "U" as *\<WantedField\>*, "T" as *\<Searchin>* and "SRV01" as *\<T
 
 If we are able to infer or guess the value of an entry's title, we can export each of its fields. Let's say that we target the virtualization environment of a company, it is actually quite possible that the IT staff's database has entries whose title contains keywords like *vmware*, *vsphere*, *vcenter*, *esx*, etc. 
 
-It is important to keep in mind that there is no need for our keywords to perfectly match the entries' title, as KeePass [simple search mode](https://keepass.info/help/base/search.html#mode_se) is used to resolve them. If the title is *vSphere Administrator Access*, then `{REF:<WantedField>@T:vsphere}` is enough to get a match.
+Because field references KeePass [simple search mode](https://keepass.info/help/base/search.html#mode_se) to resolve fields, there is no need for our keywords to perfectly match the entries' title. If it is *vSphere Administrator Access*, then `{REF:<WantedField>@T:vsphere}` is enough to get a match.
 
 Following this principle, we can create a similar PowerShell-executing trigger that tries to resolve the following references and write them in a file, hopefully gathering passwords on the way:
 
