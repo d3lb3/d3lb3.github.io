@@ -1,6 +1,6 @@
 ---
 # the default layout is 'page'
-icon: fas fa-presentation-screen
+icon: fas person-chalkboard
 order: 3
 ---
 
