@@ -1,7 +1,7 @@
 ---
 # the default layout is 'page'
 icon: fas fa-info-circle
-order: 2
+order: 3
 ---
 
 Since I was very young, I have always been deeply passionate about computers. After studying at INSA Lyon (France) and Budapest University of  Technology and Economics (Hungary), I graduated in 2021 with a degree in computer engineering. Throughout my master's degree, I was also the chairman of *InSecurity*, my university's computer club, giving courses and participating in various "Capture the Flag" events.
