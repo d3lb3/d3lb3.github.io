@@ -21,10 +21,10 @@ timezone: Europe/Paris
 
 title: d3lb3_                          # the main title
 
-tagline: French penetration tester, sharing infosec-related stuff from time to time.   # it will display as the sub-title
+tagline: French pentester and red teamer, sharing infosec-related stuff from time to time.   # it will display as the sub-title
 
 description: >-                        # used by seo meta and the atom feed
-  French penetration tester, sharing infosec-related stuff from time to time. 
+  French pentester and red teamer, sharing infosec-related stuff from time to time. 
 
 # fill in the protocol & hostname for your site, e.g., 'https://username.github.io'
 url: 'https://d3lb3.github.io'
